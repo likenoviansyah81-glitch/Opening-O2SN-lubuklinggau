@@ -84,8 +84,8 @@
         }
 
         .palm-container.active .palm-icon {
-            opacity: 0.1;
-            filter: blur(4px);
+            opacity: 0.2;
+            filter: blur(2px);
             transform: scale(1.05);
         }
 
@@ -117,7 +117,7 @@
             z-index: 100;
             text-align: center;
             padding-top: 50px;
-            animation: fadeIn 1.5s ease;
+            animation: fadeIn 1s ease;
         }
 
         @keyframes fadeIn {
@@ -143,14 +143,10 @@
 
     <div class="bg-glow"></div>
 
-    <audio id="applauseSound" src="https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3" preload="auto"></audio>
-    <audio id="alarmSound" src="https://assets.mixkit.co/active_storage/sfx/950/950-preview.mp3" preload="auto" loop></audio>
-
     <div id="status-text">SYSTEM READY<br><span style="font-size: 0.9rem; opacity: 0.6;">TEMPELKAN TELAPAK TANGAN</span></div>
 
     <div class="palm-container" id="palmTrigger">
         <div id="countdown-text">3</div>
-        
         <svg class="palm-icon" viewBox="0 0 24 24">
             <path d="M12,25c-2.4,0-4.6-0.9-6.3-2.6c-2.3-2.3-3.1-5.6-2.1-8.7l1-3.1c0.2-0.7,0.8-1.2,1.5-1.4l0.1,0c0.8-0.2,1.7,0.3,1.9,1.1l0.6,2.1V5.5C8.7,4.7,9.4,4,10.2,4s1.5,0.7,1.5,1.5v5.1h0.5V2.5C12.2,1.7,12.9,1,13.7,1s1.5,0.7,1.5,1.5v7.6h0.5V3.5c0-0.8,0.7-1.5,1.5-1.5s1.5,0.7,1.5,1.5v7.6h0.5v-3c0-0.8,0.7-1.5,1.5-1.5s1.5,0.7,1.5,1.5V16c0,3.3-1.9,6.2-4.8,7.6C15.9,24.4,14,25,12,25z"/>
         </svg>
@@ -164,7 +160,7 @@
             <h2>LUBUKLINGGAU SELATAN I</h2>
             <h1 style="color: #ffd700; font-size: 4.5rem; text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);">RESMI DIBUKA</h1>
             <p style="font-size: 1.5rem; margin-top: 40px; font-style: italic; opacity: 0.8;">"Sportivitas Adalah Jati Diri Kami"</p>
-            <button class="btn-reset" onclick="location.reload()">Reset System</button>
+            <button class="btn-reset" onclick="handleReset()">Reset System</button>
         </div>
     </div>
 
@@ -175,10 +171,12 @@
         const statusText = document.getElementById('status-text');
         const countdownDisplay = document.getElementById('countdown-text');
         
-        // Audio elements
-        const applause = document.getElementById('applauseSound');
-        const alarm = document.getElementById('alarmSound');
-        
+        // Inisialisasi Audio
+        // Menggunakan library gratis dari Pixabay/Wikimedia
+        const clapAudio = new Audio('https://www.soundjay.com/human/applause-01.mp3');
+        const sirenAudio = new Audio('https://www.soundjay.com/mechanical/siren-1.mp3');
+        sirenAudio.loop = true; // Sirine tanpa henti
+
         let scanInterval;
         let countdownValue = 3;
 
@@ -208,29 +206,39 @@
         }
 
         function cancelScan() {
-            clearInterval(scanInterval);
-            countdownDisplay.style.display = 'none';
-            trigger.classList.remove('active');
-            scanner.style.display = 'none';
-            scanner.style.animation = 'none';
-            statusText.innerHTML = 'SYSTEM READY<br><span style="font-size: 0.9rem; opacity: 0.6;">TEMPELKAN TELAPAK TANGAN</span>';
+            if (successScreen.style.display !== 'block') {
+                clearInterval(scanInterval);
+                countdownDisplay.style.display = 'none';
+                trigger.classList.remove('active');
+                scanner.style.display = 'none';
+                scanner.style.animation = 'none';
+                statusText.innerHTML = 'SYSTEM READY<br><span style="font-size: 0.9rem; opacity: 0.6;">TEMPELKAN TELAPAK TANGAN</span>';
+            }
         }
 
         function showSuccess() {
             countdownDisplay.style.display = 'none';
             successScreen.style.display = 'block';
             
-            // Play Effects
-            applause.play();
+            // Putar Suara
+            clapAudio.play().catch(e => console.log("Audio play blocked"));
             
-            // Play Alarm after a short delay (e.g., 1 second) to let applause start first
+            // Berikan jeda sedikit agar tepuk tangan terdengar lalu sirine masuk
             setTimeout(() => {
-                alarm.play();
-            }, 1000);
-            
+                sirenAudio.play().catch(e => console.log("Audio play blocked"));
+            }, 500);
+
             if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100, 50, 300, 100, 500]);
+                navigator.vibrate([100, 50, 100, 50, 300]);
             }
+        }
+
+        function handleReset() {
+            sirenAudio.pause();
+            clapAudio.pause();
+            sirenAudio.currentTime = 0;
+            clapAudio.currentTime = 0;
+            location.reload();
         }
 
         trigger.addEventListener('mousedown', startScan);

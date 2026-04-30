@@ -22,7 +22,7 @@
             height: 100vh;
         }
 
-        /* Latar Belakang Scanner */
+        /* Latar Belakang Utama */
         .bg-glow {
             position: fixed;
             top: 0;
@@ -30,7 +30,7 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(rgba(0, 8, 15, 0.8), rgba(0, 8, 15, 0.8)), 
-                        url('https://i.postimg.cc/7hY2hZJg/IMG-20260430-090610.png');
+                        url('https://i.postimg.cc/7hY2hZJg/O2SN.png');
             background-size: cover;
             background-position: center;
             z-index: -1;
@@ -103,7 +103,7 @@
             100% { top: 100%; }
         }
 
-        /* LAYAR SUKSES DENGAN BACKGROUND GAMBAR */
+        /* Layar Sukses Berwarna (Background Gambar) */
         .success-overlay {
             display: none;
             position: fixed;
@@ -115,16 +115,10 @@
             text-align: center;
             padding-top: 50px;
             animation: fadeIn 1.5s ease;
-            overflow: hidden;
-
-            /* GANTI DI SINI: Contoh menggunakan gambar dari Unsplash */
-            /* Pastikan link berakhiran .jpg atau .png atau .webp */
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9)), 
-                              url('https://i.postimg.cc/7hY2hZJg/IMG-20260430-090610.png');
-            
-            background-size: cover; /* Agar gambar memenuhi layar */
-            background-position: center; /* Agar gambar di tengah */
-            background-repeat: no-repeat;
+                              url('https://i.postimg.cc/7hY2hZJg/O2SN.png');
+            background-size: cover;
+            background-position: center;
         }
 
         @keyframes fadeIn {
@@ -132,18 +126,8 @@
             to { opacity: 1; }
         }
 
-        .success-overlay h1 { 
-            font-size: 5rem; 
-            margin: 10px 0; 
-            color: white;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
-
-        .success-overlay h2 { 
-            color: var(--glow-color); 
-            letter-spacing: 5px; 
-            text-shadow: 0 0 10px var(--glow-color);
-        }
+        .success-overlay h1 { font-size: 5rem; margin: 10px 0; color: white; }
+        .success-overlay h2 { color: var(--glow-color); letter-spacing: 5px; }
 
         .btn-reset {
             margin-top: 30px;
@@ -153,11 +137,6 @@
             color: white;
             cursor: pointer;
             border-radius: 5px;
-            transition: background 0.3s;
-        }
-
-        .btn-reset:hover {
-            background: rgba(255,255,255,0.2);
         }
     </style>
 </head>
@@ -181,7 +160,7 @@
             <h1>O2SN 2026</h1>
             <h2>LUBUKLINGGAU SELATAN I</h2>
             <h1 style="color: #ffd700; font-size: 4.5rem; text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);">RESMI DIBUKA</h1>
-            <p style="font-size: 1.5rem; margin-top: 40px; font-style: italic; opacity: 0.8; text-shadow: 0 0 5px #000;">"Sportivitas Adalah Jati Diri Kami"</p>
+            <p style="font-size: 1.5rem; margin-top: 40px; font-style: italic; opacity: 0.8;">"Sportivitas Adalah Jati Diri Kami"</p>
             <button class="btn-reset" onclick="location.reload()">Reset System</button>
         </div>
     </div>
@@ -197,8 +176,28 @@
         let countdownValue = 3;
         let audioCtx;
 
-        function playSiren() {
+        // Fungsi Suara "Beep" saat hitung mundur
+        function playScanBeep(isFinal = false) {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            // Nada lebih tinggi untuk detik terakhir
+            osc.frequency.setValueAtTime(isFinal ? 880 : 440, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // Fungsi Suara Sirine (Selesai)
+        function playSiren() {
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.type = 'sawtooth';
@@ -220,17 +219,24 @@
         function startScan(e) {
             e.preventDefault();
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
             countdownValue = 3;
             countdownDisplay.innerText = countdownValue;
             countdownDisplay.style.display = 'block';
+            
+            // Suara beep pertama langsung saat disentuh
+            playScanBeep();
+
             trigger.classList.add('active');
             scanner.style.display = 'block';
             scanner.style.animation = 'scanMove 1.5s infinite alternate linear';
             statusText.innerHTML = 'VERIFYING BIOMETRICS...<br><span style="color: #00fbff;">AUTHENTICATING</span>';
+            
             scanInterval = setInterval(() => {
                 countdownValue--;
                 if (countdownValue > 0) {
                     countdownDisplay.innerText = countdownValue;
+                    playScanBeep(); // Beep setiap detik
                     if (navigator.vibrate) navigator.vibrate(50);
                 } else {
                     clearInterval(scanInterval);
